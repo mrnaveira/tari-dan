@@ -1,7 +1,7 @@
 // Copyright 2022 The Tari Project
 // SPDX-License-Identifier: BSD-3-Clause
 
-const { Client } = require("wallet-grpc-client");
+// const { Client } = require("wallet-grpc-client");
 const {
   byteArrayToHex,
   tryConnect,

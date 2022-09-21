@@ -104,3 +104,27 @@ Then(
     expect(utxos.length).to.equal(1);
   }
 );
+
+Given(
+  "I call {string} on {word} via JSON-RPC with params {string}",
+  { timeout: 20 * 1000 },
+  async function (method_name, vn_name, params) {
+    console.log(`TODO: ${method_name} on ${vn_name} with ${params}`);
+  }
+);
+
+Given(
+  "I call {string} on {word} via JSON-RPC with a valid transaction",
+  { timeout: 20 * 1000 },
+  async function (method_name, vn_name) {
+    console.log(`TODO: ${method_name} on ${vn_name} with a valid transaction`);
+  }
+);
+
+Then(
+  'the JSON-RPC response should be:',
+  async function (json) {
+    console.log(`TODO: ${json}`);
+  }
+);
+

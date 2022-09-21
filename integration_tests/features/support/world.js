@@ -746,15 +746,19 @@ BeforeAll({ timeout: 2400000 }, async function () {
   console.log(
     "NOTE: Some tests may be excluded based on the profile used in <root>/integration_tests/cucumber.js. If none was specified, `default` profile is used."
   );
+
+  /*
   const baseNode = new BaseNodeProcess("compile");
   console.log("Compiling base node...");
   await baseNode.init();
   await baseNode.compile();
+  */
 
   const danNode = new ValidatorNodeProcess("compile");
   console.log("Compiling validator node...");
   await danNode.compile();
 
+  /*
   const wallet = new WalletProcess("compile");
   console.log("Compiling wallet...");
   await wallet.init();
@@ -782,6 +786,7 @@ BeforeAll({ timeout: 2400000 }, async function () {
   console.log("Compiling miner...");
   await miningNode.init(1, 1, 1, 1, true, 1);
   await miningNode.compile();
+  */
 
   const vn = new ValidatorNodeProcess(
     "compile",
@@ -795,12 +800,14 @@ BeforeAll({ timeout: 2400000 }, async function () {
   console.log("Compiling validator node...");
   await vn.compile();
 
+  /*
   console.log("Compiling wallet FFI...");
   await InterfaceFFI.compile();
   console.log("Finished compilation.");
   console.log("Loading FFI interface..");
   await InterfaceFFI.init();
   console.log("FFI interface loaded.");
+  */
 
   console.log("World ready, now lets run some tests! :)");
 });
