@@ -71,16 +71,16 @@ async function getSubstate(address:string, version?:number) {
   return await jsonRpc("get_substate",{address,version})
 }
 async function getAddresses() {
-  return await jsonRpc("get_addresses",)
+  return await jsonRpc("get_substate_addresses",)
 }
 async function addAddress(address:string) {
-  return await jsonRpc("add_address", [address])
+  return await jsonRpc("add_substate_address", [address])
 }
 async function deleteAddress(address:string) {
-  return await jsonRpc("delete_address", [address])
+  return await jsonRpc("delete_substate_address", [address])
 }
 async function clearAddresses() {
-  return await jsonRpc("clear_addresses")
+  return await jsonRpc("clear_substate_addresses")
 }
 
 export {

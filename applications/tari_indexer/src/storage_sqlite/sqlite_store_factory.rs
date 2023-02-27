@@ -69,7 +69,10 @@ impl SqliteStore {
         })
     }
 
-    pub fn find_by_address(address: String, conn: &mut SqliteConnection) -> Result<Option<Substate>, StorageError> {
+    pub fn find_substate_by_address(
+        address: String,
+        conn: &mut SqliteConnection,
+    ) -> Result<Option<Substate>, StorageError> {
         use crate::storage_sqlite::schema::substates;
 
         let substate_option = substates::table
@@ -162,7 +165,7 @@ impl<'a> SqliteStoreReadTransaction<'a> {
 
 pub trait StoreReadTransaction {
     fn get_substate(&mut self, address: String) -> Result<Option<Substate>, StorageError>;
-    fn get_all_addresses(&mut self) -> Result<Vec<(String, i64)>, StorageError>;
+    fn get_all_substate_addresses(&mut self) -> Result<Vec<(String, i64)>, StorageError>;
     fn get_all_substates(&mut self) -> Result<Vec<Substate>, StorageError>;
 }
 
@@ -181,7 +184,7 @@ impl StoreReadTransaction for SqliteStoreReadTransaction<'_> {
         Ok(substate)
     }
 
-    fn get_all_addresses(&mut self) -> Result<Vec<(String, i64)>, StorageError> {
+    fn get_all_substate_addresses(&mut self) -> Result<Vec<(String, i64)>, StorageError> {
         use crate::storage_sqlite::schema::substates;
 
         let addresses = substates::table
@@ -256,7 +259,7 @@ impl StoreWriteTransaction for SqliteStoreWriteTransaction<'_> {
 
         let address = &new_substate.address;
         let conn = self.connection();
-        let current_substate = SqliteStore::find_by_address(address.clone(), conn)?;
+        let current_substate = SqliteStore::find_substate_by_address(address.clone(), conn)?;
 
         match current_substate {
             Some(_) => {

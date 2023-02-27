@@ -202,10 +202,10 @@ impl JsonRpcHandlers {
         }
     }
 
-    pub async fn get_addresses(&self, value: JsonRpcExtractor) -> JrpcResult {
+    pub async fn get_substate_addresses(&self, value: JsonRpcExtractor) -> JrpcResult {
         let answer_id = value.get_answer_id();
 
-        let res = self.substate_manager.get_all_addresses_from_db().await;
+        let res = self.substate_manager.get_all_substate_addresses_from_db().await;
 
         match res {
             Ok(addresses) => Ok(JsonRpcResponse::success(answer_id, addresses)),
@@ -213,9 +213,9 @@ impl JsonRpcHandlers {
         }
     }
 
-    pub async fn add_address(&self, value: JsonRpcExtractor) -> JrpcResult {
+    pub async fn add_substate_address(&self, value: JsonRpcExtractor) -> JrpcResult {
         let answer_id = value.get_answer_id();
-        let request: AddAddressRequest = value.parse_params()?;
+        let request: AddSubstateAddressRequest = value.parse_params()?;
         let substate_address = Self::parse_substate_address(&request.address, answer_id)?;
 
         match self
@@ -228,9 +228,9 @@ impl JsonRpcHandlers {
         }
     }
 
-    pub async fn delete_address(&self, value: JsonRpcExtractor) -> JrpcResult {
+    pub async fn delete_substate_address(&self, value: JsonRpcExtractor) -> JrpcResult {
         let answer_id = value.get_answer_id();
-        let request: DeleteAddressRequest = value.parse_params()?;
+        let request: DeleteSubstateAddressRequest = value.parse_params()?;
         let substate_address = Self::parse_substate_address(&request.address, answer_id)?;
 
         match self.substate_manager.delete_substate_from_db(&substate_address).await {
@@ -239,7 +239,7 @@ impl JsonRpcHandlers {
         }
     }
 
-    pub async fn clear_addresses(&self, value: JsonRpcExtractor) -> JrpcResult {
+    pub async fn clear_substate_addresses(&self, value: JsonRpcExtractor) -> JrpcResult {
         let answer_id = value.get_answer_id();
 
         match self.substate_manager.delete_all_substates_from_db().await {
@@ -272,11 +272,11 @@ pub struct GetSubstateRequest {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct AddAddressRequest {
+pub struct AddSubstateAddressRequest {
     pub address: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct DeleteAddressRequest {
+pub struct DeleteSubstateAddressRequest {
     pub address: String,
 }
