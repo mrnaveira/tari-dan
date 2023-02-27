@@ -21,7 +21,7 @@
 //   USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-use crate::substate_storage_sqlite::schema::*;
+use crate::storage_sqlite::schema::*;
 #[derive(Debug, Identifiable, Queryable)]
 pub struct Substate {
     pub id: i32,

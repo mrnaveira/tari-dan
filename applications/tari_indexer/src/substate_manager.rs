@@ -28,14 +28,9 @@ use tari_engine_types::substate::{Substate, SubstateAddress};
 
 use crate::{
     dan_layer_scanner::DanLayerScanner,
-    substate_storage_sqlite::{
+    storage_sqlite::{
         models::substate::{NewSubstate, Substate as SubstateRow},
-        sqlite_substate_store_factory::{
-            SqliteSubstateStore,
-            SubstateStore,
-            SubstateStoreReadTransaction,
-            SubstateStoreWriteTransaction,
-        },
+        sqlite_store_factory::{SqliteStore, Store, StoreReadTransaction, StoreWriteTransaction},
     },
 };
 
@@ -43,11 +38,11 @@ const LOG_TARGET: &str = "tari::indexer::substate_manager";
 
 pub struct SubstateManager {
     dan_layer_scanner: Arc<DanLayerScanner>,
-    substate_store: SqliteSubstateStore,
+    substate_store: SqliteStore,
 }
 
 impl SubstateManager {
-    pub fn new(dan_layer_scanner: Arc<DanLayerScanner>, substate_store: SqliteSubstateStore) -> Self {
+    pub fn new(dan_layer_scanner: Arc<DanLayerScanner>, substate_store: SqliteStore) -> Self {
         Self {
             dan_layer_scanner,
             substate_store,

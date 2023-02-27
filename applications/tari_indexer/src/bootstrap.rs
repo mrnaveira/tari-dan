@@ -54,7 +54,7 @@ use crate::{
             template_manager,
         },
     },
-    substate_storage_sqlite::sqlite_substate_store_factory::SqliteSubstateStore,
+    storage_sqlite::sqlite_store_factory::SqliteStore,
     ApplicationConfig,
 };
 
@@ -83,7 +83,7 @@ pub async fn spawn_services(
     let peer_provider = CommsPeerProvider::new(comms.peer_manager());
 
     // Connect to substate db
-    let substate_store = SqliteSubstateStore::try_create(config.indexer.state_db_path())?;
+    let substate_store = SqliteStore::try_create(config.indexer.state_db_path())?;
 
     // Epoch manager
     let validator_node_client_factory = TariCommsValidatorNodeClientFactory::new(comms.connectivity());
@@ -132,7 +132,7 @@ pub struct Services {
     pub comms: CommsNode,
     pub epoch_manager: EpochManagerHandle,
     pub validator_node_client_factory: TariCommsValidatorNodeClientFactory,
-    pub substate_store: SqliteSubstateStore,
+    pub substate_store: SqliteStore,
 }
 
 fn setup_p2p_rpc(

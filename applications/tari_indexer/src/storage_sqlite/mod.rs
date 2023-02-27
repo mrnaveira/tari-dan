@@ -22,4 +22,4 @@
 
 pub mod models;
 mod schema;
-pub mod sqlite_substate_store_factory;
+pub mod sqlite_store_factory;
