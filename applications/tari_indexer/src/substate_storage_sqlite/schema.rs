@@ -29,4 +29,21 @@ diesel::table! {
     }
 }
 
-diesel::allow_tables_to_appear_in_same_query!(substates,);
+diesel::table! {
+    lists (id) {
+        id -> Integer,
+        address -> Text,
+        count -> Integer,
+    }
+}
+
+diesel::table! {
+    list_items (id) {
+        id -> Integer,
+        list_id -> Integer,
+        idx -> Integer,
+        substate_id -> Integer,
+    }
+}
+
+diesel::allow_tables_to_appear_in_same_query!(substates, lists, list_items);
