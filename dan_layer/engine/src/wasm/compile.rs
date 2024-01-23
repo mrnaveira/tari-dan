@@ -34,6 +34,8 @@ use tempfile::tempdir;
 
 use super::module::WasmModule;
 
+pub const COVERAGE_FEATURE: &str = "coverage";
+
 // TODO: remove from main build
 pub fn compile_str<S: AsRef<str>>(source: S, features: &[&str]) -> Result<WasmModule, io::Error> {
     let source = source.as_ref();
@@ -64,6 +66,9 @@ strip = "debuginfo" # Strip debug info.
 
 [lib]
 crate-type = ["cdylib", "lib"]
+
+[features]
+coverage = []
         "#
     )?;
 
@@ -81,7 +86,14 @@ pub fn compile_template<P: AsRef<Path>>(package_dir: P, features: &[&str]) -> io
         args.extend(features.iter().map(ToString::to_string));
     }
 
+    let rustflags = if features.contains(&COVERAGE_FEATURE) {
+        "-Cinstrument-coverage -Zno-profiler-runtime --emit=llvm-ir".to_owned()
+    } else {
+        String::new()
+    };
+   
     let output = Command::new("cargo")
+        //.env("RUSTFLAGS", rustflags)
         .current_dir(package_dir.as_ref())
         .args(args)
         .output()?;

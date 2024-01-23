@@ -3,7 +3,7 @@
 
 use std::{
     collections::{HashMap, HashSet},
-    path::Path,
+    path::{Path, PathBuf},
     sync::Arc,
     time::Instant,
 };
@@ -69,10 +69,11 @@ pub struct TemplateTest {
     enable_fees: bool,
     fee_table: FeeTable,
     virtual_substates: VirtualSubstates,
+    coverage_path: Option<PathBuf>
 }
 
 impl TemplateTest {
-    pub fn new<I: IntoIterator<Item = P>, P: AsRef<Path>>(template_paths: I) -> Self {
+    pub fn new<I: IntoIterator<Item = P>, P: AsRef<Path>>(template_paths: I, coverage_path: Option<PathBuf>) -> Self {
         let mut builder = Package::builder();
 
         // Add builtin templates
@@ -82,19 +83,25 @@ impl TemplateTest {
         // Add the faucet template for fungible tokens
         builder.add_template(concat!(env!("CARGO_MANIFEST_DIR"), "/templates/faucet"));
 
+        // add the coverage feature if coverage was requested
+        let features = match coverage_path {
+            Some(_) => vec!["coverage"],
+            None => vec![],
+        };
+
         // Add all of the templates specified in the argument
         for path in template_paths {
-            builder.add_template(path);
+            builder.add_template_with_features(path, &features);
         }
 
         let package = builder.build();
 
-        let test = Self::from_package(package);
+        let test = Self::from_package(package, coverage_path);
         test.bootstrap_faucet(100_000.into());
         test
     }
 
-    pub fn from_package(package: Package) -> Self {
+    pub fn from_package(package: Package, coverage_path: Option<PathBuf>) -> Self {
         let secret_key =
             RistrettoSecretKey::from_hex("8a39567509bf2f7074e5fd153337405292cdc9f574947313b62fbf8fb4cffc02").unwrap();
 
@@ -137,6 +144,7 @@ impl TemplateTest {
                 per_event_cost: 1,
                 per_log_cost: 1,
             },
+            coverage_path
         }
     }
 
