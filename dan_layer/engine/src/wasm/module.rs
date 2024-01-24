@@ -179,5 +179,5 @@ fn validate_instance(instance: &Instance) -> Result<(), WasmExecutionError> {
 }
 
 fn is_func_permitted(name: &str) -> bool {
-    name.ends_with("_main") || name == "tari_alloc" || name == "tari_free"
+    name.ends_with("_main") || name == "tari_alloc" || name == "tari_free" || name == "tari_get_coverage" || name.starts_with("minicov_")
 }

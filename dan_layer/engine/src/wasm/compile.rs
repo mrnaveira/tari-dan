@@ -76,6 +76,10 @@ coverage = []
 }
 
 pub fn compile_template<P: AsRef<Path>>(package_dir: P, features: &[&str]) -> io::Result<WasmModule> {
+    if features.contains(&COVERAGE_FEATURE) {
+        return compile_template_with_coverage(package_dir, features);
+    }
+
     let mut args = ["build", "--target", "wasm32-unknown-unknown", "--release"]
         .iter()
         .map(ToString::to_string)
@@ -93,7 +97,6 @@ pub fn compile_template<P: AsRef<Path>>(package_dir: P, features: &[&str]) -> io
     };
    
     let output = Command::new("cargo")
-        //.env("RUSTFLAGS", rustflags)
         .current_dir(package_dir.as_ref())
         .args(args)
         .output()?;
@@ -133,6 +136,80 @@ pub fn compile_template<P: AsRef<Path>>(package_dir: P, features: &[&str]) -> io
     path.push("target");
     path.push("wasm32-unknown-unknown");
     path.push("release");
+    path.push(wasm_name);
+    path.set_extension("wasm");
+
+    // return
+    let code = fs::read(path)?;
+    Ok(WasmModule::from_code(code))
+}
+
+pub fn compile_template_with_coverage<P: AsRef<Path>>(package_dir: P, features: &[&str]) -> io::Result<WasmModule> {
+    let mut args = ["build", "--target", "wasm32-unknown-unknown"]
+        .iter()
+        .map(ToString::to_string)
+        .collect::<Vec<_>>();
+
+    if !features.is_empty() {
+        args.push("--features".to_string());
+        args.extend(features.iter().map(ToString::to_string));
+    }
+
+    let rustflags = if features.contains(&COVERAGE_FEATURE) {
+        "-Clto=off -Cinstrument-coverage -Zno-profiler-runtime --emit=llvm-ir".to_owned()
+    } else {
+        String::new()
+    };
+
+    //package_dir.as_ref().try_exists().unwrap();
+    //panic!("package_dir: {:?}", package_dir.as_ref().to_string_lossy());
+    let env_path = std::env::var("PATH").unwrap();
+    let env_path = format!("/opt/homebrew/opt/llvm/bin:{}", env_path);
+   
+    let output = Command::new("cargo")
+        .env("PATH", env_path)
+        .env("CC", "/opt/homebrew/opt/llvm/bin/clang")
+        .env("AR", "/opt/homebrew/opt/llvm/bin/llvm-ar")
+        .env("RUSTFLAGS", rustflags)
+        .current_dir(package_dir.as_ref())
+        .args(args)
+        .output()?;
+    if !output.status.success() {
+        eprintln!("stdout:");
+        eprintln!("{}", String::from_utf8_lossy(&output.stdout));
+        eprintln!("stderr:");
+        eprintln!("{}", String::from_utf8_lossy(&output.stderr));
+        return Err(io::Error::new(
+            ErrorKind::Other,
+            format!("Failed to compile package: {:?}", package_dir.as_ref(),),
+        ));
+    }
+
+    // resolve wasm name
+    let manifest = Manifest::from_path(package_dir.as_ref().join("Cargo.toml")).unwrap();
+    let wasm_name = if let Some(Product { name: Some(name), .. }) = manifest.lib {
+        // lib name
+        name
+    } else if let Some(pkg) = manifest.package {
+        // package name
+        pkg.name.replace('-', "_")
+    } else {
+        // file name
+        package_dir
+            .as_ref()
+            .file_name()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_owned()
+            .replace('-', "_")
+    };
+
+    // path of the wasm executable
+    let mut path = package_dir.as_ref().to_path_buf();
+    path.push("target");
+    path.push("wasm32-unknown-unknown");
+    path.push("debug");
     path.push(wasm_name);
     path.set_extension("wasm");
 

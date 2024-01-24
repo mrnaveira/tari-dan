@@ -1,4 +1,4 @@
-//  Copyright 2022. The Tari Project
+//  Copyright 2024. The Tari Project
 //
 //  Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
 //  following conditions are met:
@@ -20,48 +20,22 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 //  USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-mod abi;
-mod ast;
-mod coverage;
-mod definition;
-mod dispatcher;
-
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{parse2, Result};
+use syn::Result;
 
-use self::{abi::generate_abi, ast::TemplateAst, coverage::generate_coverage, definition::generate_definition, dispatcher::generate_dispatcher};
-
-pub fn generate_template(input: TokenStream) -> Result<TokenStream> {
-    let ast = parse2::<TemplateAst>(input).unwrap();
-
-    let definition = generate_definition(&ast);
-    let abi = generate_abi(&ast)?;
-    let dispatcher = generate_dispatcher(&ast)?;
-    let coverage = generate_coverage()?;
-
+pub fn generate_coverage() -> Result<TokenStream> {
     let output = quote! {
-        #definition
+        #[cfg(feature = "coverage")]
+        #[no_mangle]
+        pub unsafe extern "C" fn tari_get_coverage() -> *mut u8 {
+            use ::tari_template_lib::template_dependencies::*;
 
-        #dispatcher
-
-        #abi
-
-        #coverage
-    };
-
-    // eprintln!("output = {}", output);
-
-    Ok(output)
-}
-
-pub fn generate_template_non_wasm(input: TokenStream) -> Result<TokenStream> {
-    let ast = parse2::<TemplateAst>(input).unwrap();
-
-    let definition = generate_definition(&ast);
-
-    let output = quote! {
-        #definition
+            let mut coverage = vec![];
+            minicov::capture_coverage(&mut coverage).unwrap();
+    
+            wrap_ptr(coverage)
+        }
     };
 
     Ok(output)

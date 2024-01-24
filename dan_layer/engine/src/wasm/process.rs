@@ -230,6 +230,46 @@ impl WasmProcess {
 
         Ok(())
     }
+
+    pub fn get_coverage(&self) -> Result<(), WasmExecutionError> {
+        let func_name = "tari_get_coverage";
+        if !self.instance.exports.contains(func_name) {
+            return Ok(());
+        }
+        eprintln!("exports: {:?}", self.instance.exports);
+        let func = self.instance.exports.get_function(func_name)?;
+        let res = func.call(&[]);
+
+        let val = match res {
+            Ok(res) => res,
+            Err(err) => {
+                if let Some(err) = self.env.take_last_engine_error() {
+                    return Err(WasmExecutionError::RuntimeError(err));
+                }
+                if let Some(message) = self.env.take_last_panic_message() {
+                    return Err(WasmExecutionError::Panic {
+                        message,
+                        runtime_error: err,
+                    });
+                }
+                eprintln!("Error calling function: {}", err);
+                return Err(err.into());
+            },
+        };
+
+        let ptr = val
+            .first()
+            .and_then(|v| v.i32())
+            .ok_or(WasmExecutionError::ExpectedPointerReturn { function: func_name.to_owned() })?;
+
+        // Read response from memory
+        let raw = self.env.read_memory_with_embedded_len(ptr as u32)?;
+        //let raw = self.env.read_from_memory(ptr as u32, 100)?;
+
+        panic!("*********** coverage data: {} bytes", raw.len());
+
+        Ok(())
+    }
 }
 
 impl Invokable for WasmProcess {

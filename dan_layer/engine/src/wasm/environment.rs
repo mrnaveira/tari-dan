@@ -130,14 +130,20 @@ impl<T: Clone + Sync + Send + 'static> WasmEnv<T> {
     pub(super) fn read_from_memory(&self, ptr: u32, len: u32) -> Result<Vec<u8>, WasmExecutionError> {
         let memory = self.get_memory()?;
         let mem_size = memory.data_size();
+
+        eprintln!("current memory pages: {}", memory.size().0);
+        eprintln!("current memory bytes: {}", memory.data_size());
+        eprintln!("current bytes per page: {}", memory.size().0 as u64 / memory.data_size());
+        
         let ptr_plus_len = ptr.checked_add(len).ok_or(WasmExecutionError::MaxMemorySizeExceeded)?;
         if u64::from(ptr) >= mem_size || u64::from(ptr_plus_len) >= mem_size {
             return Err(WasmExecutionError::MemoryPointerOutOfRange {
                 size: memory.data_size(),
-                pointer: u64::from(ptr),
+                pointer: u64::from(ptr_plus_len),
                 len: u64::from(len),
             });
         }
+
         let view = memory.uint8view().subarray(ptr, ptr + len);
         let mut data = vec![0u8; len as usize];
         copy_from_cell_slice(&view, &mut data);

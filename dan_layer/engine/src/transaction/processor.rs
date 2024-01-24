@@ -411,7 +411,9 @@ impl<TTemplateProvider: TemplateProvider<Template = LoadedTemplate> + 'static> T
         let result = match module {
             LoadedTemplate::Wasm(wasm_module) => {
                 let process = WasmProcess::start(wasm_module, runtime)?;
-                process.invoke(&function_def, args)?
+                let res = process.invoke(&function_def, args)?;
+                process.get_coverage()?;
+                res
             },
             LoadedTemplate::Flow(flow_factory) => {
                 flow_factory.run_new_instance(
