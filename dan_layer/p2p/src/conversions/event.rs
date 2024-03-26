@@ -1,4 +1,4 @@
-//  Copyright 2023, The Tari Project
+//  Copyright 2024, The Tari Project
 //
 //  Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
 //  following conditions are met:
@@ -20,27 +20,51 @@
 //  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 //  USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-pub mod event {
-    include!(concat!(env!("OUT_DIR"), "/tari.dan.event.rs"));
+use std::convert::{TryFrom, TryInto};
+
+use anyhow::anyhow;
+use tari_engine_types::{ 
+    events::Event, substate::SubstateId
+};
+
+use crate::proto::{
+        self,
+    };
+
+// -------------------------------- Event -------------------------------- //
+
+impl From<Event> for proto::event::Event {
+    fn from(msg: Event) -> Self {
+        Self {
+            substate_id: msg.substate_id().map(|s_id| s_id.to_bytes()).unwrap_or_default(),
+            template_address: msg.template_address().to_vec(),
+            tx_hash: msg.tx_hash().to_vec(),
+            topic: msg.topic(),
+            payload:  tari_bor::encode(&msg.payload()).unwrap(),
+        }
+    }
 }
 
-pub mod transaction {
-    include!(concat!(env!("OUT_DIR"), "/tari.dan.transaction.rs"));
-}
+impl TryFrom<proto::event::Event> for Event {
+    type Error = anyhow::Error;
 
-pub mod consensus {
-    include!(concat!(env!("OUT_DIR"), "/tari.dan.consensus.rs"));
-}
+    fn try_from(value: proto::event::Event) -> Result<Self, Self::Error> {
+        let mut substate_id_option = None;
+        if !value.substate_id.is_empty() {
+            let substate_id = SubstateId::from_bytes(&value.substate_id)
+                .map_err(|e| anyhow!("SubstateId decoding error: {}", e))?;
+            substate_id_option = Some(substate_id);
+        }
 
-pub mod network {
-    #![allow(clippy::large_enum_variant)]
-    include!(concat!(env!("OUT_DIR"), "/tari.dan.network.rs"));
-}
+        let payload = tari_bor::decode(&value.payload)
+            .map_err(|e| anyhow!("Payload decoding error: {}", e))?;
 
-pub mod rpc {
-    include!(concat!(env!("OUT_DIR"), "/tari.dan.rpc.rs"));
-}
-
-pub mod common {
-    include!(concat!(env!("OUT_DIR"), "/tari.dan.common.rs"));
+        Ok(Event::new(
+            substate_id_option,
+            value.template_address.try_into()?,
+            value.tx_hash.try_into()?,
+            value.topic,
+            payload
+        ))
+    }
 }

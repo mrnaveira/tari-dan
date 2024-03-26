@@ -22,6 +22,7 @@
 
 mod common;
 mod consensus;
+mod event;
 mod network;
 mod rpc;
 mod transaction;
