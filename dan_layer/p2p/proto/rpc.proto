@@ -25,6 +25,7 @@ package tari.dan.rpc;
 
 import "common.proto";
 import "consensus.proto";
+import "event.proto";
 import "network.proto";
 import "transaction.proto";
 
@@ -219,3 +220,19 @@ message GetHighQcResponse {
   tari.dan.consensus.QuorumCertificate high_qc = 1;
 }
 
+message GetEventsRequest {
+  uint64 from_block = 1;
+  uint64 num_blocks = 2;
+  string topic = 3;
+  bytes substate_id = 4;
+  Sorting sorting = 5;
+}
+
+enum Sorting {
+  SORTING_DESC = 0;
+  SORTING_ASC = 1;
+}
+
+message GetEventsResponse {
+  repeated tari.dan.event.Event events = 1;
+}

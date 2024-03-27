@@ -42,4 +42,10 @@ pub trait ValidatorNodeRpcService: Send + Sync + 'static {
         &self,
         request: Request<proto::GetHighQcRequest>,
     ) -> Result<Response<proto::GetHighQcResponse>, RpcStatus>;
+
+    #[rpc(method = 7)]
+    async fn get_events(
+        &self,
+        req: Request<proto::GetEventsRequest>,
+    ) -> Result<Streaming<proto::GetEventsResponse>, RpcStatus>;
 }

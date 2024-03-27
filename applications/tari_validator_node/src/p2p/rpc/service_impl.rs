@@ -25,21 +25,9 @@ use std::convert::{TryFrom, TryInto};
 use log::*;
 use tari_bor::{decode_exact, encode};
 use tari_dan_common_types::{optional::Optional, PeerAddress, SubstateAddress};
-use tari_dan_p2p::{
-    proto,
-    proto::rpc::{
-        GetHighQcRequest,
-        GetHighQcResponse,
-        GetSubstateRequest,
-        GetSubstateResponse,
-        GetTransactionResultRequest,
-        GetTransactionResultResponse,
-        PayloadResultStatus,
-        SubstateStatus,
-        SyncBlocksRequest,
-        SyncBlocksResponse,
-    },
-};
+use tari_dan_p2p::proto::{self, rpc::{
+        GetEventsRequest, GetEventsResponse, GetHighQcRequest, GetHighQcResponse, GetSubstateRequest, GetSubstateResponse, GetTransactionResultRequest, GetTransactionResultResponse, PayloadResultStatus, SubstateStatus, SyncBlocksRequest, SyncBlocksResponse
+    }};
 use tari_dan_storage::{
     consensus_models::{Block, BlockId, HighQc, LockedBlock, QuorumCertificate, SubstateRecord, TransactionRecord},
     StateStore,
@@ -293,5 +281,16 @@ impl ValidatorNodeRpcService for ValidatorNodeRpcServiceImpl {
         Ok(Response::new(GetHighQcResponse {
             high_qc: Some((&high_qc).into()),
         }))
+    }
+
+    async fn get_events(
+        &self,
+        req: Request<GetEventsRequest>,
+    ) -> Result<Streaming<GetEventsResponse>, RpcStatus> {
+        let _req = req.into_message();
+
+        let (_sender, receiver) = mpsc::channel(10);
+
+        Ok(Streaming::new(receiver))
     }
 }
