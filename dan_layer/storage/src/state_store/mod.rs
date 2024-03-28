@@ -10,6 +10,7 @@ use std::{
 use serde::{Deserialize, Serialize};
 use tari_common_types::types::{FixedHash, PublicKey};
 use tari_dan_common_types::{Epoch, NodeAddressable, NodeHeight, SubstateAddress};
+use tari_engine_types::{events::Event, substate::SubstateId};
 use tari_state_tree::{TreeStore, TreeStoreReader, Version};
 use tari_transaction::{Transaction, TransactionId};
 #[cfg(feature = "ts")]
@@ -252,6 +253,8 @@ pub trait StateStoreReadTransaction {
         &mut self,
         block_id: &BlockId,
     ) -> Result<Vec<PendingStateTreeDiff>, StorageError>;
+
+    fn events_get(&mut self, start_block_id: &BlockId, num_blocks: usize, topic: &Option<String>, substate_id: &Option<SubstateId>) -> Result<Vec<Event>, StorageError>;
 }
 
 pub trait StateStoreWriteTransaction {

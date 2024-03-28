@@ -32,13 +32,14 @@ use tari_dan_storage::{
     consensus_models::{Block, BlockId, HighQc, LockedBlock, QuorumCertificate, SubstateRecord, TransactionRecord},
     StateStore,
 };
-use tari_engine_types::virtual_substate::VirtualSubstateId;
+use tari_engine_types::{substate::SubstateId, virtual_substate::VirtualSubstateId};
 use tari_epoch_manager::base_layer::EpochManagerHandle;
 use tari_rpc_framework::{Request, Response, RpcStatus, Streaming};
 use tari_state_store_sqlite::SqliteStateStore;
 use tari_transaction::{Transaction, TransactionId};
 use tari_validator_node_rpc::rpc_service::ValidatorNodeRpcService;
 use tokio::{sync::mpsc, task};
+use tari_dan_storage::StateStoreReadTransaction;
 
 use crate::{
     p2p::{rpc::sync_task::BlockSyncTask, services::mempool::MempoolHandle},
@@ -287,9 +288,84 @@ impl ValidatorNodeRpcService for ValidatorNodeRpcServiceImpl {
         &self,
         req: Request<GetEventsRequest>,
     ) -> Result<Streaming<GetEventsResponse>, RpcStatus> {
-        let _req = req.into_message();
+        let req = req.into_message();
+        let store = self.shard_state_store.clone();
 
-        let (_sender, receiver) = mpsc::channel(10);
+        let (sender, receiver) = mpsc::channel(10);
+
+        let start_block_id = BlockId::try_from(req.start_block_id)
+            .map_err(|e| RpcStatus::bad_request(&format!("Invalid encoded block id: {}", e)))?;
+        // Check if we have the blocks
+        let start_block = store
+            .with_read_tx(|tx| Block::get(tx, &start_block_id).optional())
+            .map_err(RpcStatus::log_internal_error(LOG_TARGET))?
+            .ok_or_else(|| RpcStatus::not_found(&format!("start_block_id {start_block_id} not found")))?;
+
+        // Check the start block
+        let locked_block = store
+            .with_read_tx(|tx| LockedBlock::get(tx).optional())
+            .map_err(RpcStatus::log_internal_error(LOG_TARGET))?
+            .ok_or_else(|| RpcStatus::not_found("No locked block"))?;
+        let start_height = start_block.height();
+        if start_height > locked_block.height() {
+            return Err(RpcStatus::not_found(&format!(
+                "start_block_id {} is after locked block {}",
+                start_block_id, locked_block
+            )));
+        }
+
+        let substate_id_filter = if req.substate_id.is_empty() {
+            None
+        } else {
+            let substate_id = SubstateId::from_bytes(&req.substate_id)
+                .map_err(RpcStatus::log_internal_error(LOG_TARGET))?;
+            Some(substate_id)
+        };
+    
+        const EVENT_BUFFER_SIZE: usize = 15;
+        task::spawn(
+            async move {
+                let mut counter = 0;
+                loop {
+                    let events = store
+                        .with_read_tx(|tx| {
+                            tx.events_get(&start_block_id, EVENT_BUFFER_SIZE, &req.topic, &substate_id_filter)
+                        });
+
+                    match events {
+                        Ok(events) if events.is_empty() => {
+                            break;
+                        },
+                        Ok(events) => {
+                            let num_items = events.len();
+                            counter += num_items;
+
+                            // send all events in the batch to the caller
+                            for event in events {
+                                let res = sender.send(Ok(GetEventsResponse {
+                                    event: Some(event.into()),
+                                }))
+                                .await;
+                                if let Err(err) = res {
+                                    warn!(target: LOG_TARGET, "Error sending error to GRPC client: {}", err);
+                                    break;
+                                }
+                            }
+                
+                            // stop streaming if this is the last batch of events
+                            if num_items < EVENT_BUFFER_SIZE {
+                                debug!( target: LOG_TARGET, "Get events completed. Streamed {} item(s)", counter);
+                                break;
+                            }
+                        },
+                        Err(err) => {
+                            let _ = sender.send(Err(RpcStatus::log_internal_error(LOG_TARGET)(err))).await;
+                            break;
+                        },
+                    }
+                }
+            }
+        );
 
         Ok(Streaming::new(receiver))
     }

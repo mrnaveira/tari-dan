@@ -60,9 +60,11 @@ use tari_dan_storage::{
     StateStoreReadTransaction,
     StorageError,
 };
-use tari_engine_types::lock::LockFlag;
+use tari_engine_types::{events::Event, lock::LockFlag, substate::SubstateId, TemplateAddress};
+use tari_template_lib::Hash;
 use tari_transaction::TransactionId;
 use tari_utilities::ByteArray;
+use tari_template_lib::prelude::Metadata;
 
 use crate::{
     error::SqliteStorageError,
@@ -1741,6 +1743,14 @@ impl<'tx, TAddr: NodeAddressable + Serialize + DeserializeOwned + 'tx> StateStor
             })?;
 
         diffs.into_iter().map(TryInto::try_into).collect()
+    }
+
+    fn events_get(&mut self, _start_block_id: &BlockId, _num_blocks: usize, _topic: &Option<String>, _substate_id: &Option<SubstateId>) -> Result<Vec<Event>, StorageError> {
+        // TODO
+        let events = vec![
+            Event::new(None, TemplateAddress::default(), Hash::default(), "foo".to_owned(), Metadata::new())
+        ];
+        Ok(events)
     }
 }
 
