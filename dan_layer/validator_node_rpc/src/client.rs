@@ -9,17 +9,15 @@ use serde::{Deserialize, Serialize};
 use tari_bor::{decode, decode_exact, encode};
 use tari_dan_common_types::{NodeAddressable, PeerAddress, SubstateAddress};
 use tari_dan_p2p::{
-    proto,
-    proto::rpc::{GetTransactionResultRequest, PayloadResultStatus, SubmitTransactionRequest, SubstateStatus},
+    proto::{self, rpc::{GetEventsRequest, GetEventsResponse, GetTransactionResultRequest, PayloadResultStatus, SubmitTransactionRequest, SubstateStatus}},
     TariMessagingSpec,
 };
-use tari_dan_storage::consensus_models::Decision;
+use tari_dan_storage::consensus_models::{BlockId, Decision};
 use tari_engine_types::{
-    commit_result::ExecuteResult,
-    substate::{Substate, SubstateId, SubstateValue},
-    virtual_substate::{VirtualSubstate, VirtualSubstateId},
+    commit_result::ExecuteResult, events::Event, substate::{self, Substate, SubstateId, SubstateValue}, virtual_substate::{VirtualSubstate, VirtualSubstateId}
 };
 use tari_networking::{MessageSpec, NetworkingHandle};
+use tari_rpc_framework::ClientStreaming;
 use tari_transaction::{Transaction, TransactionId};
 
 use crate::{rpc_service, ValidatorNodeRpcClientError};
@@ -44,6 +42,13 @@ pub trait ValidatorNodeRpcClient: Send + Sync {
 
     async fn get_substate(&mut self, shard: SubstateAddress) -> Result<SubstateResult, Self::Error>;
     async fn get_virtual_substate(&mut self, address: VirtualSubstateId) -> Result<VirtualSubstate, Self::Error>;
+    async fn get_events(
+        &mut self,
+        start_block_id: &BlockId,
+        num_blocks: u64,
+        topic: Option<String>,
+        substate_id: Option<SubstateId>,
+    ) -> Result<ClientStreaming<GetEventsResponse>,  Self::Error>;
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -246,6 +251,27 @@ impl<TMsg: MessageSpec> ValidatorNodeRpcClient for TariValidatorNodeRpcClient<TM
                 response.status
             ))),
         }
+    }
+
+    async fn get_events(
+        &mut self,
+        start_block_id: &BlockId,
+        num_blocks: u64,
+        topic: Option<String>,
+        substate_id: Option<SubstateId>,
+    ) -> Result<ClientStreaming<GetEventsResponse>,  Self::Error> {
+        let mut client = self.client_connection().await?;
+
+        let request = GetEventsRequest {
+            start_block_id: start_block_id.as_bytes().to_vec(),
+            num_blocks,
+            topic,
+            substate_id: substate_id.map(|id| id.to_bytes()).unwrap_or_default(),
+        };
+
+        let response = client.get_events(request).await?;
+
+        Ok(response)
     }
 }
 
