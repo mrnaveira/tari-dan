@@ -39,6 +39,7 @@ use axum::{
 };
 use log::*;
 use serde::Serialize;
+use tari_validator_node_rpc::client::TariValidatorNodeRpcClientFactory;
 
 use crate::{
     graphql::model::events::{EventQuery, EventSchema},

@@ -89,6 +89,7 @@ impl SubstateManager {
             SubstateScanner<EpochManagerHandle<PeerAddress>, TariValidatorNodeRpcClientFactory, SubstateFileCache>,
         >,
         substate_store: SqliteSubstateStore,
+        validator_node_client_factory: TariValidatorNodeRpcClientFactory,
     ) -> Self {
         Self {
             substate_scanner: dan_layer_scanner,
@@ -452,6 +453,29 @@ impl SubstateManager {
         }
 
         Ok(num_scanned)
+    }
+
+    pub async fn scan_events(&self,
+        substate_id: Option<SubstateId>,
+        topic: Option<String>,
+        offset: u32,
+        limit: u32,
+    ) -> Result<Vec<Event>, anyhow::Error> {
+        // TODO: read from database and only query the VNs for newer events
+        /*
+        let mut rpc_client = client_factory.create_client(addr);
+        let mut client = rpc_client.client_connection().await?;
+
+        let mut stream = client
+            .get_events(SyncBlocksRequest {
+                start_block_id: locked_block.block_id.as_bytes().to_vec(),
+            })
+            .await?;
+
+        Ok(events)
+        */
+
+        Ok(vec![])
     }
 }
 

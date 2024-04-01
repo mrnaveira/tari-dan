@@ -113,6 +113,7 @@ pub async fn run_indexer(config: ApplicationConfig, mut shutdown_signal: Shutdow
     let substate_manager = Arc::new(SubstateManager::new(
         dan_layer_scanner.clone(),
         services.substate_store.clone(),
+        services.validator_node_client_factory.clone(),
     ));
     let transaction_manager = TransactionManager::new(
         services.epoch_manager.clone(),

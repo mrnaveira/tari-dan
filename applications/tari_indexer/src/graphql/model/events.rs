@@ -133,6 +133,36 @@ impl EventQuery {
         Ok(events)
     }
 
+    pub async fn get_events(
+        &self,
+        ctx: &Context<'_>,
+        substate_id: Option<String>,
+        topic: Option<String>,
+        offset: u32,
+        limit: u32,
+    ) -> Result<Vec<Event>, anyhow::Error> {
+        info!(
+            target: LOG_TARGET,
+            "Querying events. substate_id: {:?}, topic: {:?}, offset: {}, limit: {}, ", substate_id, topic, offset, limit,
+        );
+        
+        let substate_manager = ctx.data_unchecked::<Arc<SubstateManager>>();
+
+        let substate_id = match substate_id {
+            Some(str) => Some(SubstateId::from_str(&str)?),
+            None => None,
+        };
+        
+        let events = substate_manager
+            .scan_events(substate_id, topic, offset, limit)
+            .await?
+            .iter()
+            .map(|e| Event::from_engine_event(e.clone()))
+            .collect::<Result<Vec<Event>, anyhow::Error>>()?;
+
+        Ok(events)
+    }
+
     pub async fn save_event(
         &self,
         ctx: &Context<'_>,
