@@ -19,6 +19,7 @@ tari_utilities = { workspace = true }
 
 anyhow = { workspace = true }
 bigdecimal = { workspace = true }
+bincode = { workspace = true, features=["serde"] }
 indexmap = { workspace = true }
 log = { workspace = true }
 hex = { workspace = true }

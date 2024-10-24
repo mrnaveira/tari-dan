@@ -9910,6 +9910,7 @@ version = "0.7.0"
 dependencies = [
  "anyhow",
  "bigdecimal",
+ "bincode 2.0.0-rc.3",
  "hex",
  "indexmap 2.5.0",
  "log",

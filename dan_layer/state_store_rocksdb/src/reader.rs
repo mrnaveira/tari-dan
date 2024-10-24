@@ -109,6 +109,10 @@ impl<'a, TAddr> RocksDbStateStoreReadTransaction<'a, TAddr> {
         }
     }
 
+    pub(crate) fn rocksdb_transaction(&mut self) -> &mut Transaction<'a, TransactionDB> {
+        &mut self.tx
+    }
+
     pub(crate) fn commit(self) -> Result<(), RocksDbStorageError> {
         self.tx.commit()
         .map_err(|source| RocksDbStorageError::RocksDbError {

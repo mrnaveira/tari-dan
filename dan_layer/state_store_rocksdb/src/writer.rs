@@ -86,6 +86,8 @@ use time::{OffsetDateTime, PrimitiveDateTime};
 
 use crate::{reader::RocksDbStateStoreReadTransaction};
 
+use bincode;
+
 const LOG_TARGET: &str = "tari::dan::storage::state_store_rocksdb::writer";
 
 pub struct RocksDbStateStoreWriteTransaction<'a, TAddr> {
@@ -224,7 +226,24 @@ impl<'tx, TAddr: NodeAddressable + 'tx> StateStoreWriteTransaction for RocksDbSt
     }
 
     fn blocks_insert(&mut self, block: &Block) -> Result<(), StorageError> {
-        todo!()
+        // key
+        let block_id_str = block.id().to_string();
+        let key = format!("blocks_{}", block_id_str);
+
+        // value
+        let config = bincode::config::standard();
+        let value = bincode::serde::encode_to_vec(block, config).unwrap();
+
+        // TODO: block time => new struct
+
+        // store the block
+        self.transaction.as_mut().unwrap()
+            .rocksdb_transaction()
+            .put(key, value)
+            .unwrap();
+
+        Ok(())
+
         /*
         use crate::schema::blocks;
 

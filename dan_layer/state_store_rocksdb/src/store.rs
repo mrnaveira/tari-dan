@@ -44,8 +44,10 @@ pub struct RocksDbStateStore<TAddr> {
 
 impl<TAddr> RocksDbStateStore<TAddr> {
     pub fn connect(path: &str) -> Result<Self, StorageError> {
+        let db = TransactionDB::open_default(path).unwrap();
+
         Ok(Self {
-            db: Arc::new(TransactionDB::open_default(path).unwrap()),
+            db: Arc::new(db),
             _addr: PhantomData,
         })
     }
