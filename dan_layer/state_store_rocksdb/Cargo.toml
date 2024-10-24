@@ -1,6 +1,6 @@
 [package]
-name = "tari_state_store_sqlite"
-description = "SQLite implementation of Tari state store"
+name = "tari_state_store_rocksdb"
+description = "RocksDB implementation of Tari state store"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
@@ -19,11 +19,10 @@ tari_utilities = { workspace = true }
 
 anyhow = { workspace = true }
 bigdecimal = { workspace = true }
-diesel = { workspace = true, default-features = false, features = ["sqlite", "time", "numeric", "returning_clauses_for_sqlite_3_35"] }
-diesel_migrations = { workspace = true }
 indexmap = { workspace = true }
 log = { workspace = true }
 hex = { workspace = true }
+rocksdb = { workspace = true }
 serde = { workspace = true, default-features = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
@@ -31,3 +30,4 @@ time = { workspace = true }
 
 [dev-dependencies]
 rand = { workspace = true }
+tempfile = { workspace = true }

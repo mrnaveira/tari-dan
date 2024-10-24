@@ -28,6 +28,7 @@ members = [
     "dan_layer/indexer_lib",
     "dan_layer/p2p",
     "dan_layer/rpc_state_sync",
+    "dan_layer/state_store_rocksdb",
     "dan_layer/state_store_sqlite",
     "dan_layer/state_tree",
     "dan_layer/storage_sqlite",
@@ -212,6 +213,7 @@ quote = "1.0.7"
 rand = "0.8.5"
 rayon = "1.7.0"
 reqwest = "0.11.16"
+rocksdb = "0.22.0"
 semver = "1.0"
 serde = { version = "1.0", default-features = false }
 serde_json = "1.0"
